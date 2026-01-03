@@ -15,14 +15,17 @@ declare module '@tanstack/react-router' {
 
 export async function render(url: string) {
   try {
-    // Create a new router instance per request
+    // Create a new router instance per request with the current URL
+    // The router needs to know the initial location for SSR
     const requestRouter = createRouter({ 
       routeTree,
+      context: {
+        location: url,
+      },
     });
     
-    // Navigate to the current URL to initialize the router's store
-    // This must be done before rendering to ensure the router context is set up
-    await requestRouter.navigate({ to: url });
+    // Load the router to initialize its store
+    await requestRouter.load();
     
     // Create a new QueryClient for each request (SSR-safe)
     const queryClient = new QueryClient({
@@ -88,7 +91,7 @@ export default async function handler(event: any) {
     
     // Navigate to the current URL to initialize the router's store
     // This must be done before rendering to ensure the router context is set up
-    await requestRouter.load({ pathname });
+    await requestRouter.navigate({ to: pathname });
     
     // Create a new QueryClient for each request (SSR-safe)
     const queryClient = new QueryClient({
