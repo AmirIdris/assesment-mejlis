@@ -1,5 +1,5 @@
+// auth/decorators/public.decorator.ts
 import { SetMetadata } from '@nestjs/common';
-import { IS_PUBLIC_KEY } from '../guards/session-auth.guard';
 
+export const IS_PUBLIC_KEY = 'isPublic';
 export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);
-

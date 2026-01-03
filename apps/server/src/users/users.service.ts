@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Inject } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   userListQuerySchema,
@@ -10,7 +10,10 @@ import {
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService)
+    private readonly prisma: PrismaService
+  ) {}
 
   async findAll(query: UserListQuery) {
     const validated = userListQuerySchema.parse(query);

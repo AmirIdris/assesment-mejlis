@@ -1,5 +1,5 @@
 export default () => ({
-  port: parseInt(process.env.SERVER_PORT || '5000', 10),
+  port: parseInt(process.env.SERVER_PORT || '5001', 10),
   corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:3000',
   nodeEnv: process.env.NODE_ENV || 'development',
   database: {

@@ -1,14 +1,16 @@
-import { Controller, Post, Body, Get, Req, UseGuards } from '@nestjs/common';
-import { Request } from 'express';
+import { Controller, Post, Body, Get, Req, Inject } from '@nestjs/common';
+import { Request } from 'express-serve-static-core';
 import { AuthService } from './auth.service';
 import { ZodValidationPipe } from '../common/pipes/validation.pipe';
-import { SessionAuthGuard } from './guards/session-auth.guard';
 import { Public } from './decorators/public.decorator';
 import { loginSchema, signupSchema, type LoginInput, type SignupInput } from '@repo/shared-types';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    @Inject(AuthService)
+    private readonly authService: AuthService
+  ) {}
 
   @Public()
   @Post('login')
@@ -26,19 +28,25 @@ export class AuthController {
     @Body(new ZodValidationPipe(signupSchema)) signupDto: SignupInput,
     @Req() req: Request,
   ) {
-    const user = await this.authService.signup(signupDto, req.session);
-    return { user };
+    try {
+      const user = await this.authService.signup(signupDto, req.session);
+      if (!user) {
+        throw new Error('User creation failed');
+      }
+      return { user };
+    } catch (error) {
+      console.error('Signup error:', error);
+      throw error;
+    }
   }
 
   @Post('logout')
-  @UseGuards(SessionAuthGuard)
   async logout(@Req() req: Request) {
     await this.authService.logout(req.session);
     return { message: 'Logged out successfully' };
   }
 
   @Get('me')
-  @UseGuards(SessionAuthGuard)
   async getCurrentUser(@Req() req: Request) {
     const user = await this.authService.getCurrentUser(req.session.userId!);
     return { user };

@@ -1,17 +1,17 @@
-import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+// auth/guards/session-auth.guard.ts
+import { Injectable, CanActivate, ExecutionContext, UnauthorizedException, Inject } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { PrismaService } from '../../prisma/prisma.service';
-
-export const IS_PUBLIC_KEY = 'isPublic';
+import { IS_PUBLIC_KEY } from '../decorators/public.decorator';  // Make sure this exists
 
 @Injectable()
 export class SessionAuthGuard implements CanActivate {
   constructor(
-    private reflector: Reflector,
-    private prisma: PrismaService,
+    @Inject(Reflector)
+    private readonly reflector: Reflector
   ) {}
 
-  async canActivate(context: ExecutionContext): Promise<boolean> {
+  canActivate(context: ExecutionContext): boolean {
+    // Check if route is public first
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),
@@ -28,24 +28,13 @@ export class SessionAuthGuard implements CanActivate {
       throw new UnauthorizedException('Not authenticated');
     }
 
-    // Load user from database and attach to request
-    const user = await this.prisma.user.findUnique({
-      where: { id: session.userId },
-      select: {
-        id: true,
-        email: true,
-        role: true,
-      },
-    });
-
-    if (!user) {
-      throw new UnauthorizedException('User not found');
-    }
-
-    // Attach user to request for use in controllers
-    request.user = user;
-
+    // Set user info from session
+    request.user = { 
+      id: session.userId, 
+      email: session.email,
+      role: session.role
+    };
+    
     return true;
   }
 }
-
